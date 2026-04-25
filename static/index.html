@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Invoicer</title>
+<style>
+:root {
+  --obsidian: #0B0B0D;
+  --surface: #111114;
+  --surface2: #1a1a1f;
+  --surface3: #222228;
+  --gold: #D29E3D;
+  --gold-dim: #B8860B;
+  --copper: #C87A3B;
+  --parchment: #FAF6F0;
+  --muted: #777;
+  --muted2: #555;
+  --danger: #c0392b;
+  --green: #2ecc71;
+  --blue: #3498db;
+  --radius: 6px;
+  --transition: 0.2s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--obsidian);
+  color: var(--parchment);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 200px;
+  background: var(--surface);
+  border-right: 1px solid var(--surface2);
+  padding: 20px 0;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  padding: 0 16px 20px;
+  border-bottom: 1px solid var(--surface2);
+  margin-bottom: 8px;
+}
+
+.sidebar-brand h1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+}
+
+.sidebar-brand span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.nav-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  transition: var(--transition);
+  border-left: 2px solid transparent;
+}
+
+.nav-item:hover { color: var(--parchment); background: var(--surface2); }
+.nav-item.active {
+  color: var(--gold);
+  border-left-color: var(--gold);
+  background: rgba(210,158,61,0.05);
+}
+
+.nav-item .nav-count {
+  float: right;
+  background: var(--surface2);
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+}
+
+.main {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+/* Header bar */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--parchment);
+}
+
+/* Buttons */
+.btn {
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-primary { background: var(--gold); color: var(--obsidian); }
+.btn-primary:hover { background: var(--gold-dim); }
+.btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--surface2); }
+.btn-ghost:hover { color: var(--parchment); border-color: var(--muted2); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { opacity: 0.85; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-green { background: var(--green); color: #fff; }
+.btn-blue { background: var(--blue); color: #fff; }
+
+/* Stats cards */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.stat-card .label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.stat-card .value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--parchment);
+}
+
+.stat-card .value.gold { color: var(--gold); }
+.stat-card .value.green { color: var(--green); }
+.stat-card .value.danger { color: var(--danger); }
+
+/* Tables */
+.table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  background: var(--surface2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--surface3);
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--surface2);
+  font-size: 13px;
+}
+
+tr:hover td { background: rgba(210,158,61,0.03); }
+tr:last-child td { border-bottom: none; }
+
+.clickable { cursor: pointer; }
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-draft { background: var(--surface3); color: var(--muted); }
+.badge-sent { background: rgba(52,152,219,0.15); color: var(--blue); }
+.badge-paid { background: rgba(46,204,113,0.15); color: var(--green); }
+.badge-overdue { background: rgba(192,57,43,0.15); color: var(--danger); }
+.badge-cancelled { background: var(--surface2); color: var(--muted2); }
+.badge-active { background: rgba(210,158,61,0.15); color: var(--gold); }
+.badge-won { background: rgba(46,204,113,0.15); color: var(--green); }
+.badge-lost { background: rgba(192,57,43,0.15); color: var(--danger); }
+.badge-archived { background: var(--surface2); color: var(--muted2); }
+
+/* Deal entries */
+.entry-card {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.entry-card .entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.entry-card .entry-title { font-size: 14px; font-weight: 600; }
+
+.entry-card .entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.entry-card .entry-content {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.entry-type-badge {
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-weight: 600;
+}
+
+.type-scope { background: rgba(52,152,219,0.15); color: var(--blue); }
+.type-pricing { background: rgba(210,158,61,0.15); color: var(--gold); }
+.type-decision { background: rgba(46,204,113,0.15); color: var(--green); }
+.type-meeting { background: rgba(155,89,182,0.15); color: #9b59b6; }
+.type-note { background: var(--surface3); color: var(--muted); }
+
+.share-link-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--obsidian);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  margin-bottom: 20px;
+}
+
+.share-link-box input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--parchment);
+  font-size: 12px;
+  font-family: monospace;
+  outline: none;
+}
+
+.deal-items-table { margin-top: 16px; }
+
+/* Filter tabs */
+.filter-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.filter-tab {
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--surface2);
+  transition: var(--transition);
+}
+
+.filter-tab:hover { color: var(--parchment); }
+.filter-tab.active {
+  background: var(--gold);
+  color: var(--obsidian);
+  border-color: var(--gold);
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
+  overflow-y: auto;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: 8px;
+  width: 640px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  margin-bottom: 40px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--surface2);
+}
+
+.modal-header h3 { font-size: 15px; font-weight: 600; }
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-close:hover { color: var(--parchment); }
+
+.modal-body { padding: 20px; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--surface2);
+}
+
+/* Forms */
+.form-group { margin-bottom: 14px; }
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--obsidian);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  color: var(--parchment);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.form-group textarea { resize: vertical; min-height: 60px; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Line items */
+.line-items { margin-bottom: 14px; }
+
+.line-items-header {
+  display: grid;
+  grid-template-columns: 1fr 70px 100px 100px 30px;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.line-items-header span {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.line-item-row {
+  display: grid;
+  grid-template-columns: 1fr 70px 100px 100px 30px;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.line-item-row input {
+  padding: 7px 8px;
+  background: var(--obsidian);
+  border: 1px solid var(--surface2);
+  border-radius: var(--radius);
+  color: var(--parchment);
+  font-size: 12px;
+}
+
+.line-item-row input:focus { outline: none; border-color: var(--gold); }
+
+.line-item-row .remove-item {
+  background: none;
+  border: none;
+  color: var(--muted2);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.line-item-row .remove-item:hover { color: var(--danger); }
+
+.line-item-row .item-amount {
+  background: var(--surface2);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.invoice-totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 12px 0;
+  border-top: 1px solid var(--surface2);
+}
+
+.total-row {
+  display: flex;
+  gap: 20px;
+  font-size: 13px;
+}
+
+.total-row .total-label { color: var(--muted); width: 80px; text-align: right; }
+.total-row .total-value { width: 100px; text-align: right; }
+.total-row.grand { font-size: 16px; font-weight: 600; color: var(--gold); }
+
+/* Invoice detail view */
+.invoice-detail { max-width: 700px; }
+
+.invoice-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.meta-section h4 {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.meta-section p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.meta-section .value-large {
+  font-size: 15px;
+  color: var(--parchment);
+  font-weight: 500;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--parchment);
+  z-index: 200;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.error { border-color: var(--danger); }
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+}
+
+.empty h3 { font-size: 15px; margin-bottom: 8px; color: var(--muted2); }
+.empty p { font-size: 12px; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { padding: 16px; }
+  .mobile-nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+  }
+  .mobile-nav .filter-tab { white-space: nowrap; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .line-items-header, .line-item-row {
+    grid-template-columns: 1fr 50px 70px 70px 24px;
+  }
+  .modal { width: 98vw; }
+  .invoice-meta { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <h1>ORMUS</h1>
+      <span>Invoicer</span>
+    </div>
+    <div class="nav-item active" data-view="dashboard">Dashboard</div>
+    <div class="nav-item" data-view="invoices">Invoices <span class="nav-count" id="nav-inv-count">0</span></div>
+    <div class="nav-item" data-view="clients">Clients <span class="nav-count" id="nav-cli-count">0</span></div>
+    <div class="nav-item" data-view="deals">Deals <span class="nav-count" id="nav-deal-count">0</span></div>
+    <div class="nav-item" data-view="settings">Settings</div>
+  </nav>
+
+  <div class="main">
+    <!-- Mobile nav -->
+    <div class="mobile-nav" style="display:none;">
+      <div class="filter-tab active" data-view="dashboard">Dashboard</div>
+      <div class="filter-tab" data-view="invoices">Invoices</div>
+      <div class="filter-tab" data-view="clients">Clients</div>
+      <div class="filter-tab" data-view="deals">Deals</div>
+      <div class="filter-tab" data-view="settings">Settings</div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="view-dashboard" class="view">
+      <div class="page-header">
+        <h2>Dashboard</h2>
+        <button class="btn btn-primary" onclick="openInvoiceModal()">New Invoice</button>
+      </div>
+      <div class="stats" id="stats-grid"></div>
+      <h3 style="font-size:14px;margin-bottom:12px;color:var(--muted)">Recent Invoices</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Amount</th><th>Status</th>
+          </tr></thead>
+          <tbody id="recent-invoices"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Invoices -->
+    <div id="view-invoices" class="view" style="display:none">
+      <div class="page-header">
+        <h2>Invoices</h2>
+        <button class="btn btn-primary" onclick="openInvoiceModal()">New Invoice</button>
+      </div>
+      <div class="filter-tabs" id="invoice-filters"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Invoice</th><th>Client</th><th>Date</th><th>Due</th><th>Amount</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="invoices-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Invoice Detail -->
+    <div id="view-invoice-detail" class="view" style="display:none">
+      <div class="page-header">
+        <h2 id="detail-title">Invoice</h2>
+        <button class="btn btn-ghost" onclick="showView('invoices')">Back</button>
+      </div>
+      <div id="invoice-detail-content" class="invoice-detail"></div>
+    </div>
+
+    <!-- Clients -->
+    <div id="view-clients" class="view" style="display:none">
+      <div class="page-header">
+        <h2>Clients</h2>
+        <button class="btn btn-primary" onclick="openClientModal()">New Client</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Company</th><th>Email</th><th>Invoices</th><th>Total Billed</th><th></th>
+          </tr></thead>
+          <tbody id="clients-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="view-settings" class="view" style="display:none">
+      <div class="page-header"><h2>Settings</h2></div>
+      <div style="max-width:500px">
+        <form id="settings-form">
+          <div class="form-group">
+            <label>Company Name</label>
+            <input name="company_name" />
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input name="company_email" type="email" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input name="company_phone" />
+          </div>
+          <div class="form-group">
+            <label>Address</label>
+            <textarea name="company_address" rows="3"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Invoice Prefix</label>
+              <input name="invoice_prefix" />
+            </div>
+            <div class="form-group">
+              <label>Currency</label>
+              <select name="currency">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR</option>
+                <option value="PAB">PAB (B/.)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Default Tax Rate (%)</label>
+            <input name="default_tax_rate" type="number" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Default Payment Terms</label>
+            <textarea name="default_terms" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Bank Details</label>
+            <textarea name="bank_details" rows="4" placeholder="Bank name, account number, routing..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Deals List -->
+    <div id="view-deals" class="view" style="display:none">
+      <div class="page-header">
+        <h2>Deals</h2>
+        <button class="btn btn-primary" onclick="openDealModal()">New Deal</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Deal</th><th>Client</th><th>Entries</th><th>Items</th><th>Value</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="deals-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Deal Detail -->
+    <div id="view-deal-detail" class="view" style="display:none">
+      <div id="deal-detail-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Client Modal -->
+<div class="modal-overlay" id="client-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="client-modal-title">New Client</h3>
+      <button class="modal-close" onclick="closeModal('client-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="client-form">
+        <input type="hidden" name="id" />
+        <div class="form-group">
+          <label>Name *</label>
+          <input name="name" required />
+        </div>
+        <div class="form-group">
+          <label>Company</label>
+          <input name="company" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input name="email" type="email" />
+          </div>
+          <div class="form-group">
+            <label>Phone</label>
+            <input name="phone" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea name="address" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="2"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('client-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClient()">Save Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Modal -->
+<div class="modal-overlay" id="invoice-modal">
+  <div class="modal" style="width:720px">
+    <div class="modal-header">
+      <h3 id="invoice-modal-title">New Invoice</h3>
+      <button class="modal-close" onclick="closeModal('invoice-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="invoice-form">
+        <input type="hidden" name="id" />
+        <div class="form-group">
+          <label>Client *</label>
+          <select name="client_id" required id="invoice-client-select">
+            <option value="">Select client...</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Issue Date</label>
+            <input name="issue_date" type="date" />
+          </div>
+          <div class="form-group">
+            <label>Due Date</label>
+            <input name="due_date" type="date" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tax Rate (%)</label>
+            <input name="tax_rate" type="number" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Currency</label>
+            <select name="currency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR</option>
+              <option value="PAB">PAB (B/.)</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:8px">
+          Line Items
+        </label>
+        <div class="line-items">
+          <div class="line-items-header">
+            <span>Description</span><span>Qty</span><span>Rate</span><span>Amount</span><span></span>
+          </div>
+          <div id="line-items-container"></div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="addLineItem()">+ Add Item</button>
+
+        <div class="invoice-totals" id="invoice-totals">
+          <div class="total-row"><span class="total-label">Subtotal</span><span class="total-value" id="modal-subtotal">$0.00</span></div>
+          <div class="total-row"><span class="total-label">Tax</span><span class="total-value" id="modal-tax">$0.00</span></div>
+          <div class="total-row grand"><span class="total-label">Total</span><span class="total-value" id="modal-total">$0.00</span></div>
+        </div>
+
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="2" placeholder="Additional notes for the client..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>Payment Terms</label>
+          <textarea name="terms" rows="2"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('invoice-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deal Modal -->
+<div class="modal-overlay" id="deal-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="deal-modal-title">New Deal</h3>
+      <button class="modal-close" onclick="closeModal('deal-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="deal-form">
+        <div class="form-group">
+          <label>Deal Title *</label>
+          <input name="title" required placeholder="e.g. S50 Financial — Technology Projects" />
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <select name="client_id" id="deal-client-select">
+            <option value="">No client yet</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('deal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeal()">Save Deal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deal Entry Modal -->
+<div class="modal-overlay" id="entry-modal">
+  <div class="modal" style="width:700px">
+    <div class="modal-header">
+      <h3 id="entry-modal-title">Add Entry</h3>
+      <button class="modal-close" onclick="closeModal('entry-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="entry-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Title</label>
+            <input name="title" placeholder="e.g. Scope Analysis" />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select name="entry_type">
+              <option value="note">Note</option>
+              <option value="scope">Scope</option>
+              <option value="pricing">Pricing</option>
+              <option value="decision">Decision</option>
+              <option value="meeting">Meeting</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Content (markdown supported)</label>
+          <textarea name="content" rows="16" placeholder="Write your analysis, notes, pricing breakdown..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('entry-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- Deal Item Modal -->
+<div class="modal-overlay" id="deal-item-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="deal-item-modal-title">Add Line Item</h3>
+      <button class="modal-close" onclick="closeModal('deal-item-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="deal-item-form">
+        <div class="form-group">
+          <label>Description *</label>
+          <input name="description" required placeholder="e.g. P1 — Internal Operations Dashboard" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Quantity</label>
+            <input name="quantity" type="number" step="any" min="0" value="1" />
+          </div>
+          <div class="form-group">
+            <label>Rate ($)</label>
+            <input name="rate" type="number" step="any" min="0" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <textarea name="notes" rows="2" placeholder="Scope details, hour estimates, assumptions..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('deal-item-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDealItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// --- State ---
+let clients = [];
+let invoices = [];
+let deals = [];
+let settings = {};
+let currentFilter = 'all';
+let currentView = 'dashboard';
+let currentDealId = null;
+
+// --- API ---
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Request failed');
+  }
+  return res.json();
+}
+
+// --- Init ---
+async function init() {
+  try {
+    [settings, clients, invoices, deals] = await Promise.all([
+      api('/api/settings'),
+      api('/api/clients'),
+      api('/api/invoices'),
+      api('/api/deals')
+    ]);
+    renderDashboard();
+    renderInvoices();
+    renderClients();
+    renderDeals();
+    populateSettings();
+    updateNavCounts();
+    setupMobileNav();
+  } catch (e) {
+    toast('Failed to load: ' + e.message, true);
+  }
+}
+
+// --- Navigation ---
+document.querySelectorAll('.nav-item[data-view]').forEach(el => {
+  el.addEventListener('click', () => showView(el.dataset.view));
+});
+
+function showView(view) {
+  currentView = view;
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-' + view).style.display = '';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+  document.querySelectorAll('.mobile-nav .filter-tab').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'invoices') renderInvoices();
+  if (view === 'clients') renderClients();
+  if (view === 'deals') renderDeals();
+}
+
+function setupMobileNav() {
+  if (window.innerWidth <= 768) {
+    document.querySelector('.mobile-nav').style.display = 'flex';
+    document.querySelectorAll('.mobile-nav .filter-tab').forEach(el => {
+      el.addEventListener('click', () => showView(el.dataset.view));
+    });
+  }
+}
+
+// --- Dashboard ---
+async function renderDashboard() {
+  const stats = await api('/api/stats');
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="label">Outstanding</div><div class="value gold">${fmtCur(stats.outstanding)}</div></div>
+    <div class="stat-card"><div class="label">Total Paid</div><div class="value green">${fmtCur(stats.total_paid)}</div></div>
+    <div class="stat-card"><div class="label">Total Billed</div><div class="value">${fmtCur(stats.total_billed)}</div></div>
+    <div class="stat-card"><div class="label">Overdue</div><div class="value${stats.overdue_count > 0 ? ' danger' : ''}">${stats.overdue_count}</div></div>
+    <div class="stat-card"><div class="label">Drafts</div><div class="value">${stats.draft_count}</div></div>
+  `;
+
+  const recent = invoices.slice(0, 8);
+  document.getElementById('recent-invoices').innerHTML = recent.length
+    ? recent.map(inv => invoiceRow(inv)).join('')
+    : '<tr><td colspan="6" class="empty"><h3>No invoices yet</h3><p>Create your first invoice to get started.</p></td></tr>';
+}
+
+// --- Invoices ---
+function renderInvoices() {
+  const statuses = ['all', 'draft', 'sent', 'paid', 'overdue', 'cancelled'];
+  document.getElementById('invoice-filters').innerHTML = statuses.map(s =>
+    `<div class="filter-tab${currentFilter === s ? ' active' : ''}" onclick="filterInvoices('${s}')">${s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}</div>`
+  ).join('');
+
+  const filtered = currentFilter === 'all' ? invoices : invoices.filter(i => i.status === currentFilter);
+  document.getElementById('invoices-table').innerHTML = filtered.length
+    ? filtered.map(inv => invoiceRow(inv, true)).join('')
+    : '<tr><td colspan="7" class="empty"><h3>No invoices</h3></td></tr>';
+}
+
+function invoiceRow(inv, showActions = false) {
+  return `<tr class="clickable" onclick="viewInvoice(${inv.id})">
+    <td style="color:var(--gold);font-weight:500">${esc(inv.invoice_number)}</td>
+    <td>${esc(inv.client_name)}${inv.client_company ? '<br><span style="color:var(--muted);font-size:11px">' + esc(inv.client_company) + '</span>' : ''}</td>
+    <td>${fmtDate(inv.issue_date)}</td>
+    <td>${fmtDate(inv.due_date)}</td>
+    <td style="font-weight:500">${fmtCur(inv.total)}</td>
+    <td><span class="badge badge-${inv.status}">${inv.status}</span></td>
+    ${showActions ? '<td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editInvoice(' + inv.id + ')">Edit</button></td>' : ''}
+  </tr>`;
+}
+
+async function filterInvoices(status) {
+  currentFilter = status;
+  invoices = await api('/api/invoices' + (status !== 'all' ? '?status=' + status : ''));
+  renderInvoices();
+}
+
+async function viewInvoice(id) {
+  const inv = await api('/api/invoices/' + id);
+  document.getElementById('detail-title').textContent = inv.invoice_number;
+
+  let html = `
+    <div class="detail-actions">
+      ${inv.status === 'draft' ? '<button class="btn btn-blue btn-sm" onclick="setInvoiceStatus(' + id + ',\'sent\')">Mark Sent</button>' : ''}
+      ${inv.status === 'sent' ? '<button class="btn btn-green btn-sm" onclick="setInvoiceStatus(' + id + ',\'paid\')">Mark Paid</button>' : ''}
+      ${inv.status !== 'paid' && inv.status !== 'cancelled' ? '<button class="btn btn-ghost btn-sm" onclick="editInvoice(' + id + ')">Edit</button>' : ''}
+      <a class="btn btn-ghost btn-sm" href="/api/invoices/${id}/pdf" target="_blank">Download PDF</a>
+      ${inv.status !== 'paid' ? '<button class="btn btn-danger btn-sm" onclick="deleteInvoice(' + id + ')">Delete</button>' : ''}
+    </div>
+    <div class="invoice-meta">
+      <div class="meta-section">
+        <h4>Bill To</h4>
+        <p class="value-large">${esc(inv.client_name)}</p>
+        <p>${esc(inv.client_company || '')}</p>
+        <p>${esc((inv.client_address || '').replace(/\n/g, '<br>'))}</p>
+        <p>${esc(inv.client_email || '')}</p>
+      </div>
+      <div class="meta-section">
+        <h4>Invoice Details</h4>
+        <p><strong>Status:</strong> <span class="badge badge-${inv.status}">${inv.status}</span></p>
+        <p><strong>Issued:</strong> ${fmtDate(inv.issue_date)}</p>
+        <p><strong>Due:</strong> ${fmtDate(inv.due_date)}</p>
+        ${inv.paid_at ? '<p><strong>Paid:</strong> ' + fmtDate(inv.paid_at) + '</p>' : ''}
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-bottom:20px">
+      <table>
+        <thead><tr><th>Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr></thead>
+        <tbody>
+          ${inv.items.map(it => `<tr>
+            <td>${esc(it.description)}</td>
+            <td style="text-align:right">${fmtNum(it.quantity)}</td>
+            <td style="text-align:right">${fmtCur(it.rate)}</td>
+            <td style="text-align:right;font-weight:500">${fmtCur(it.amount)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="invoice-totals">
+      <div class="total-row"><span class="total-label">Subtotal</span><span class="total-value">${fmtCur(inv.subtotal)}</span></div>
+      ${inv.tax_rate > 0 ? '<div class="total-row"><span class="total-label">Tax (' + inv.tax_rate + '%)</span><span class="total-value">' + fmtCur(inv.tax_amount) + '</span></div>' : ''}
+      <div class="total-row grand"><span class="total-label">Total</span><span class="total-value">${fmtCur(inv.total)}</span></div>
+    </div>
+  `;
+
+  if (inv.notes) html += `<div style="margin-top:20px"><h4 style="font-size:11px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">Notes</h4><p style="color:var(--muted);font-size:13px">${esc(inv.notes)}</p></div>`;
+  if (inv.terms) html += `<div style="margin-top:16px"><h4 style="font-size:11px;color:var(--gold);text-transform:uppercase;margin-bottom:6px">Terms</h4><p style="color:var(--muted);font-size:13px">${esc(inv.terms)}</p></div>`;
+
+  document.getElementById('invoice-detail-content').innerHTML = html;
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-invoice-detail').style.display = '';
+}
+
+async function setInvoiceStatus(id, status) {
+  try {
+    await api('/api/invoices/' + id + '/status', { method: 'PATCH', body: { status } });
+    invoices = await api('/api/invoices');
+    viewInvoice(id);
+    toast('Invoice marked as ' + status);
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteInvoice(id) {
+  if (!confirm('Delete this invoice?')) return;
+  try {
+    await api('/api/invoices/' + id, { method: 'DELETE' });
+    invoices = await api('/api/invoices');
+    showView('invoices');
+    toast('Invoice deleted');
+  } catch (e) { toast(e.message, true); }
+}
+
+// --- Clients ---
+function renderClients() {
+  document.getElementById('clients-table').innerHTML = clients.length
+    ? clients.map(c => `<tr>
+        <td style="font-weight:500">${esc(c.name)}</td>
+        <td>${esc(c.company || '-')}</td>
+        <td style="color:var(--muted)">${esc(c.email || '-')}</td>
+        <td>${c.invoice_count || 0}</td>
+        <td>${fmtCur(c.total_billed || 0)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="editClient(${c.id})">Edit</button>
+          ${(c.invoice_count || 0) === 0 ? '<button class="btn btn-danger btn-sm" onclick="deleteClient(' + c.id + ')" style="margin-left:4px">Del</button>' : ''}
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" class="empty"><h3>No clients yet</h3><p>Add your first client to start invoicing.</p></td></tr>';
+  document.getElementById('nav-cli-count').textContent = clients.length;
+}
+
+// --- Client Modal ---
+function openClientModal(data) {
+  document.getElementById('client-modal-title').textContent = data ? 'Edit Client' : 'New Client';
+  const form = document.getElementById('client-form');
+  form.reset();
+  if (data) {
+    form.id_field = data.id;
+    form.name.value = data.name || '';
+    form.company.value = data.company || '';
+    form.email.value = data.email || '';
+    form.phone.value = data.phone || '';
+    form.address.value = data.address || '';
+    form.notes.value = data.notes || '';
+  } else {
+    form.id_field = null;
+  }
+  openModal('client-modal');
+}
+
+async function editClient(id) {
+  const client = await api('/api/clients/' + id);
+  openClientModal(client);
+}
+
+async function saveClient() {
+  const form = document.getElementById('client-form');
+  const data = Object.fromEntries(new FormData(form));
+  if (!data.name) return toast('Name is required', true);
+
+  try {
+    const id = form.id_field;
+    if (id) {
+      await api('/api/clients/' + id, { method: 'PUT', body: data });
+    } else {
+      await api('/api/clients', { method: 'POST', body: data });
+    }
+    clients = await api('/api/clients');
+    renderClients();
+    closeModal('client-modal');
+    toast(id ? 'Client updated' : 'Client created');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteClient(id) {
+  if (!confirm('Delete this client?')) return;
+  try {
+    await api('/api/clients/' + id, { method: 'DELETE' });
+    clients = await api('/api/clients');
+    renderClients();
+    toast('Client deleted');
+  } catch (e) { toast(e.message, true); }
+}
+
+// --- Invoice Modal ---
+function openInvoiceModal(data) {
+  document.getElementById('invoice-modal-title').textContent = data ? 'Edit Invoice' : 'New Invoice';
+  const form = document.getElementById('invoice-form');
+  form.reset();
+  form.id_field = data ? data.id : null;
+
+  // Populate client dropdown
+  const sel = document.getElementById('invoice-client-select');
+  sel.innerHTML = '<option value="">Select client...</option>' +
+    clients.map(c => `<option value="${c.id}"${data && data.client_id == c.id ? ' selected' : ''}>${esc(c.name)}${c.company ? ' (' + esc(c.company) + ')' : ''}</option>`).join('');
+
+  if (data) {
+    form.issue_date.value = data.issue_date || '';
+    form.due_date.value = data.due_date || '';
+    form.tax_rate.value = data.tax_rate || 0;
+    form.currency.value = data.currency || 'USD';
+    form.notes.value = data.notes || '';
+    form.terms.value = data.terms || '';
+  } else {
+    const today = new Date().toISOString().split('T')[0];
+    const due = new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0];
+    form.issue_date.value = today;
+    form.due_date.value = due;
+    form.tax_rate.value = settings.default_tax_rate || 0;
+    form.currency.value = settings.currency || 'USD';
+    form.terms.value = settings.default_terms || '';
+  }
+
+  // Line items
+  const container = document.getElementById('line-items-container');
+  container.innerHTML = '';
+  if (data && data.items && data.items.length > 0) {
+    data.items.forEach(it => addLineItem(it));
+  } else {
+    addLineItem();
+  }
+
+  recalcModal();
+  openModal('invoice-modal');
+}
+
+async function editInvoice(id) {
+  const inv = await api('/api/invoices/' + id);
+  openInvoiceModal(inv);
+}
+
+function addLineItem(data) {
+  const container = document.getElementById('line-items-container');
+  const row = document.createElement('div');
+  row.className = 'line-item-row';
+  row.innerHTML = `
+    <input type="text" placeholder="Description" class="item-desc" value="${esc(data?.description || '')}" />
+    <input type="number" placeholder="1" class="item-qty" value="${data?.quantity || 1}" min="0" step="any" />
+    <input type="number" placeholder="0.00" class="item-rate" value="${data?.rate || ''}" min="0" step="any" />
+    <div class="item-amount">${fmtCur((data?.quantity || 1) * (data?.rate || 0))}</div>
+    <button type="button" class="remove-item" onclick="this.parentElement.remove();recalcModal()">&times;</button>
+  `;
+  row.querySelector('.item-qty').addEventListener('input', recalcModal);
+  row.querySelector('.item-rate').addEventListener('input', recalcModal);
+  container.appendChild(row);
+}
+
+function recalcModal() {
+  const rows = document.querySelectorAll('#line-items-container .line-item-row');
+  let subtotal = 0;
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+    const rate = parseFloat(row.querySelector('.item-rate').value) || 0;
+    const amount = qty * rate;
+    row.querySelector('.item-amount').textContent = fmtCur(amount);
+    subtotal += amount;
+  });
+  const taxRate = parseFloat(document.querySelector('#invoice-form [name=tax_rate]').value) || 0;
+  const tax = subtotal * (taxRate / 100);
+  document.getElementById('modal-subtotal').textContent = fmtCur(subtotal);
+  document.getElementById('modal-tax').textContent = fmtCur(tax);
+  document.getElementById('modal-total').textContent = fmtCur(subtotal + tax);
+}
+
+// Recalc on tax rate change
+document.querySelector('#invoice-form [name=tax_rate]')?.addEventListener('input', recalcModal);
+
+async function saveInvoice() {
+  const form = document.getElementById('invoice-form');
+  const data = Object.fromEntries(new FormData(form));
+  if (!data.client_id) return toast('Select a client', true);
+
+  // Gather line items
+  const rows = document.querySelectorAll('#line-items-container .line-item-row');
+  const items = [];
+  rows.forEach(row => {
+    const desc = row.querySelector('.item-desc').value.trim();
+    const qty = row.querySelector('.item-qty').value;
+    const rate = row.querySelector('.item-rate').value;
+    if (desc || parseFloat(rate) > 0) {
+      items.push({ description: desc, quantity: parseFloat(qty) || 1, rate: parseFloat(rate) || 0 });
+    }
+  });
+
+  if (items.length === 0) return toast('Add at least one line item', true);
+
+  const body = {
+    client_id: parseInt(data.client_id),
+    issue_date: data.issue_date,
+    due_date: data.due_date,
+    tax_rate: parseFloat(data.tax_rate) || 0,
+    currency: data.currency,
+    notes: data.notes,
+    terms: data.terms,
+    items
+  };
+
+  try {
+    const id = form.id_field;
+    if (id) {
+      await api('/api/invoices/' + id, { method: 'PUT', body });
+    } else {
+      await api('/api/invoices', { method: 'POST', body });
+    }
+    invoices = await api('/api/invoices');
+    updateNavCounts();
+    closeModal('invoice-modal');
+    showView('invoices');
+    toast(id ? 'Invoice updated' : 'Invoice created');
+  } catch (e) { toast(e.message, true); }
+}
+
+// --- Deals ---
+async function renderDeals() {
+  deals = await api('/api/deals');
+  document.getElementById('deals-table').innerHTML = deals.length
+    ? deals.map(d => `<tr class="clickable" onclick="viewDeal(${d.id})">
+        <td style="font-weight:500;color:var(--gold)">${esc(d.title)}</td>
+        <td>${esc(d.client_name || '-')}${d.client_company ? '<br><span style="color:var(--muted);font-size:11px">' + esc(d.client_company) + '</span>' : ''}</td>
+        <td>${d.entry_count || 0}</td>
+        <td>${d.item_count || 0}</td>
+        <td style="font-weight:500">${fmtCur(d.total || 0)}</td>
+        <td><span class="badge badge-${d.status}">${d.status}</span></td>
+        <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteDeal(${d.id})">Del</button></td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" class="empty"><h3>No deals yet</h3><p>Create a deal to start capturing scope and pricing.</p></td></tr>';
+  updateNavCounts();
+}
+
+async function viewDeal(id) {
+  currentDealId = id;
+  const deal = await api('/api/deals/' + id);
+  const shareUrl = location.origin + '/share/' + deal.share_token;
+
+  let html = `
+    <div class="page-header">
+      <h2>${esc(deal.title)}</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="showView('deals')">Back</button>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <span class="badge badge-${deal.status}" style="font-size:11px;padding:4px 10px">${deal.status}</span>
+      ${deal.client_name ? '<span style="color:var(--muted);font-size:13px">Client: <strong style="color:var(--parchment)">' + esc(deal.client_name) + '</strong></span>' : '<span style="color:var(--muted);font-size:13px">No client assigned</span>'}
+      <span style="color:var(--muted2);font-size:11px;margin-left:auto">Updated ${fmtDate(deal.updated_at)}</span>
+    </div>
+
+    <div class="share-link-box">
+      <span style="font-size:11px;color:var(--gold);text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap">Share</span>
+      <input type="text" value="${esc(shareUrl)}" readonly onclick="this.select()" id="share-url-input" />
+      <button class="btn btn-ghost btn-sm" onclick="copyShareLink()">Copy</button>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="openEntryModal()">+ Entry</button>
+      <button class="btn btn-primary btn-sm" onclick="openDealItemModal()">+ Line Item</button>
+      ${deal.status === 'active' ? '<button class="btn btn-ghost btn-sm" onclick="editDealMeta(' + id + ')">Edit Deal</button>' : ''}
+      ${deal.status === 'active' && deal.items.length > 0 && deal.client_id ? '<button class="btn btn-green btn-sm" onclick="convertToInvoice(' + id + ')">Convert to Invoice</button>' : ''}
+      ${deal.status === 'active' ? '<button class="btn btn-ghost btn-sm" onclick="setDealStatus(' + id + ',\'won\')">Mark Won</button>' : ''}
+      ${deal.status === 'active' ? '<button class="btn btn-ghost btn-sm" onclick="setDealStatus(' + id + ',\'lost\')">Mark Lost</button>' : ''}
+      ${deal.status !== 'archived' ? '<button class="btn btn-ghost btn-sm" onclick="setDealStatus(' + id + ',\'archived\')">Archive</button>' : ''}
+    </div>
+  `;
+
+  // Entries
+  if (deal.entries.length > 0) {
+    html += '<h3 style="font-size:14px;margin-bottom:12px;color:var(--muted)">Entries</h3>';
+    html += deal.entries.map(e => `
+      <div class="entry-card">
+        <div class="entry-header">
+          <div>
+            ${e.title ? '<span class="entry-title">' + esc(e.title) + '</span>' : ''}
+            <span class="entry-type-badge type-${e.entry_type}">${e.entry_type}</span>
+          </div>
+          <div class="entry-meta">
+            <span style="font-size:11px;color:var(--muted)">${fmtDate(e.created_at)}</span>
+            <button class="btn btn-ghost btn-sm" onclick="editEntry(${e.id})" style="padding:2px 6px">Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteEntry(${e.id})" style="padding:2px 6px;color:var(--danger)">Del</button>
+          </div>
+        </div>
+        <div class="entry-content">${esc(e.content)}</div>
+      </div>
+    `).join('');
+  }
+
+  // Items
+  html += '<h3 style="font-size:14px;margin:20px 0 12px;color:var(--muted)">Line Items</h3>';
+  if (deal.items.length > 0) {
+    html += `<div class="table-wrap deal-items-table"><table>
+      <thead><tr>
+        <th>Description</th><th>Notes</th><th style="text-align:right">Qty</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${deal.items.map(it => `<tr>
+          <td style="font-weight:500">${esc(it.description)}</td>
+          <td style="color:var(--muted);font-size:12px">${esc(it.notes || '-')}</td>
+          <td style="text-align:right">${fmtNum(it.quantity)}</td>
+          <td style="text-align:right">${fmtCur(it.rate)}</td>
+          <td style="text-align:right;font-weight:500">${fmtCur(it.amount)}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="editDealItem(${it.id})" style="padding:2px 6px">Edit</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteDealItem(${it.id})" style="padding:2px 6px;color:var(--danger)">Del</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td colspan="4" style="text-align:right;font-weight:600;color:var(--gold);font-size:15px;padding:12px 14px">Total</td>
+        <td style="text-align:right;font-weight:600;color:var(--gold);font-size:15px;padding:12px 14px">${fmtCur(deal.total)}</td>
+        <td></td>
+      </tr></tfoot>
+    </table></div>`;
+  } else {
+    html += '<div class="empty" style="padding:24px"><p>No line items yet. Add items to define the deal value.</p></div>';
+  }
+
+  document.getElementById('deal-detail-content').innerHTML = html;
+  document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+  document.getElementById('view-deal-detail').style.display = '';
+}
+
+function copyShareLink() {
+  const input = document.getElementById('share-url-input');
+  input.select();
+  navigator.clipboard.writeText(input.value).then(() => toast('Share link copied'));
+}
+
+// Deal CRUD
+function openDealModal(data) {
+  document.getElementById('deal-modal-title').textContent = data ? 'Edit Deal' : 'New Deal';
+  const form = document.getElementById('deal-form');
+  form.reset();
+  form.id_field = data ? data.id : null;
+  const sel = document.getElementById('deal-client-select');
+  sel.innerHTML = '<option value="">No client yet</option>' +
+    clients.map(c => `<option value="${c.id}"${data && data.client_id == c.id ? ' selected' : ''}>${esc(c.name)}${c.company ? ' (' + esc(c.company) + ')' : ''}</option>`).join('');
+  if (data) form.title.value = data.title || '';
+  openModal('deal-modal');
+}
+
+async function saveDeal() {
+  const form = document.getElementById('deal-form');
+  const data = Object.fromEntries(new FormData(form));
+  if (!data.title) return toast('Title is required', true);
+  const body = { title: data.title, client_id: data.client_id ? parseInt(data.client_id) : null };
+  try {
+    const id = form.id_field;
+    if (id) {
+      await api('/api/deals/' + id, { method: 'PUT', body });
+      closeModal('deal-modal');
+      viewDeal(id);
+    } else {
+      const deal = await api('/api/deals', { method: 'POST', body });
+      closeModal('deal-modal');
+      viewDeal(deal.id);
+    }
+    toast(id ? 'Deal updated' : 'Deal created');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function editDealMeta(id) {
+  const deal = await api('/api/deals/' + id);
+  openDealModal(deal);
+}
+
+async function setDealStatus(id, status) {
+  try {
+    await api('/api/deals/' + id, { method: 'PUT', body: { status } });
+    viewDeal(id);
+    toast('Deal marked as ' + status);
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteDeal(id) {
+  if (!confirm('Delete this deal and all its entries?')) return;
+  try {
+    await api('/api/deals/' + id, { method: 'DELETE' });
+    renderDeals();
+    toast('Deal deleted');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function convertToInvoice(id) {
+  if (!confirm('Convert this deal to an invoice? The deal will be marked as Won.')) return;
+  try {
+    const invoice = await api('/api/deals/' + id + '/convert', { method: 'POST' });
+    invoices = await api('/api/invoices');
+    updateNavCounts();
+    toast('Invoice ' + invoice.invoice_number + ' created');
+    viewInvoice(invoice.id);
+  } catch (e) { toast(e.message, true); }
+}
+
+// Entry CRUD
+function openEntryModal(data) {
+  document.getElementById('entry-modal-title').textContent = data ? 'Edit Entry' : 'Add Entry';
+  const form = document.getElementById('entry-form');
+  form.reset();
+  form.id_field = data ? data.id : null;
+  if (data) {
+    form.title.value = data.title || '';
+    form.entry_type.value = data.entry_type || 'note';
+    form.content.value = data.content || '';
+  }
+  openModal('entry-modal');
+}
+
+async function editEntry(entryId) {
+  const deal = await api('/api/deals/' + currentDealId);
+  const entry = deal.entries.find(e => e.id === entryId);
+  if (entry) openEntryModal(entry);
+}
+
+async function saveEntry() {
+  const form = document.getElementById('entry-form');
+  const data = Object.fromEntries(new FormData(form));
+  if (!data.content) return toast('Content is required', true);
+  try {
+    const entryId = form.id_field;
+    if (entryId) {
+      await api('/api/deals/' + currentDealId + '/entries/' + entryId, { method: 'PUT', body: data });
+    } else {
+      await api('/api/deals/' + currentDealId + '/entries', { method: 'POST', body: data });
+    }
+    closeModal('entry-modal');
+    viewDeal(currentDealId);
+    toast(entryId ? 'Entry updated' : 'Entry added');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteEntry(entryId) {
+  if (!confirm('Delete this entry?')) return;
+  try {
+    await api('/api/deals/' + currentDealId + '/entries/' + entryId, { method: 'DELETE' });
+    viewDeal(currentDealId);
+    toast('Entry deleted');
+  } catch (e) { toast(e.message, true); }
+}
+
+// Deal Item CRUD
+function openDealItemModal(data) {
+  document.getElementById('deal-item-modal-title').textContent = data ? 'Edit Item' : 'Add Line Item';
+  const form = document.getElementById('deal-item-form');
+  form.reset();
+  form.id_field = data ? data.id : null;
+  if (data) {
+    form.description.value = data.description || '';
+    form.quantity.value = data.quantity || 1;
+    form.rate.value = data.rate || '';
+    form.notes.value = data.notes || '';
+  }
+  openModal('deal-item-modal');
+}
+
+async function editDealItem(itemId) {
+  const deal = await api('/api/deals/' + currentDealId);
+  const item = deal.items.find(i => i.id === itemId);
+  if (item) openDealItemModal(item);
+}
+
+async function saveDealItem() {
+  const form = document.getElementById('deal-item-form');
+  const data = Object.fromEntries(new FormData(form));
+  if (!data.description) return toast('Description is required', true);
+  const body = {
+    description: data.description,
+    quantity: parseFloat(data.quantity) || 1,
+    rate: parseFloat(data.rate) || 0,
+    notes: data.notes
+  };
+  try {
+    const itemId = form.id_field;
+    if (itemId) {
+      await api('/api/deals/' + currentDealId + '/items/' + itemId, { method: 'PUT', body });
+    } else {
+      await api('/api/deals/' + currentDealId + '/items', { method: 'POST', body });
+    }
+    closeModal('deal-item-modal');
+    viewDeal(currentDealId);
+    toast(itemId ? 'Item updated' : 'Item added');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function deleteDealItem(itemId) {
+  if (!confirm('Delete this item?')) return;
+  try {
+    await api('/api/deals/' + currentDealId + '/items/' + itemId, { method: 'DELETE' });
+    viewDeal(currentDealId);
+    toast('Item deleted');
+  } catch (e) { toast(e.message, true); }
+}
+
+// --- Settings ---
+function populateSettings() {
+  const form = document.getElementById('settings-form');
+  for (const [k, v] of Object.entries(settings)) {
+    const el = form.querySelector(`[name="${k}"]`);
+    if (el) el.value = v || '';
+  }
+}
+
+document.getElementById('settings-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target));
+  try {
+    settings = await api('/api/settings', { method: 'PUT', body: data });
+    toast('Settings saved');
+  } catch (e) { toast(e.message, true); }
+});
+
+// --- Utils ---
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function updateNavCounts() {
+  document.getElementById('nav-inv-count').textContent = invoices.length;
+  document.getElementById('nav-cli-count').textContent = clients.length;
+  document.getElementById('nav-deal-count').textContent = deals.length;
+}
+
+function fmtCur(n) {
+  return '$' + (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  return new Date(d + (d.length === 10 ? 'T00:00:00' : '')).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function fmtNum(n) {
+  if (n === Math.floor(n)) return Math.floor(n);
+  return n.toFixed(2);
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.className = 'toast', 3000);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+init();
+</script>
+</body>
+</html>

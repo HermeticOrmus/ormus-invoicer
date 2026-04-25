@@ -1,0 +1,21 @@
+{
+  "name": "ormus-invoicer",
+  "version": "1.0.0",
+  "description": "Self-hosted invoicing for solo operators and small studios. Express + SQLite + PDF, no SaaS, no monthly fee.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/HermeticOrmus/ormus-invoicer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HermeticOrmus/ormus-invoicer.git"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.0",
+    "pdfkit": "^0.15.0"
+  }
+}
