@@ -1,6 +1,23 @@
-# ormus-invoicer
+<p align="center">
+  <img src="https://ormus.solutions/mascot/chain_braces_to_swan.gif" alt="ormus-invoicer" width="128" style="image-rendering: pixelated;" />
+</p>
 
-> Self-hosted invoicing for solo operators and small studios. Express + SQLite + PDF. No SaaS, no monthly fee, no telemetry, no lock-in.
+<h1 align="center">ormus-invoicer</h1>
+
+<p align="center">
+  <em>Self-hosted invoicing for solo operators and small studios. Express + SQLite + PDF. No SaaS, no monthly fee.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/HermeticOrmus/ormus-invoicer/stargazers"><img src="https://img.shields.io/github/stars/HermeticOrmus/ormus-invoicer?style=flat-square&color=aa8142" alt="Stars" /></a>
+  <a href="https://github.com/HermeticOrmus/ormus-invoicer/blob/main/LICENSE"><img src="https://img.shields.io/github/license/HermeticOrmus/ormus-invoicer?style=flat-square&color=aa8142" alt="License" /></a>
+  <a href="https://github.com/HermeticOrmus/ormus-invoicer/commits"><img src="https://img.shields.io/github/last-commit/HermeticOrmus/ormus-invoicer?style=flat-square&color=aa8142" alt="Last Commit" /></a>
+  <img src="https://img.shields.io/badge/Claude_Code-aa8142?style=flat-square&logo=anthropic&logoColor=white" alt="Claude Code" />
+</p>
+
+---
+
+> **Self-hosted invoicing for solo operators and small studios. Express + SQLite + PDF. No SaaS, no monthly fee, no telemetry, no lock-in.**
 
 A minimal-but-complete invoicing tool you run yourself. Clients, invoices, line items, deals, status tracking, PDF export, shareable deal links. SQLite-backed, single binary's worth of dependencies, deploys anywhere Node runs.
 
