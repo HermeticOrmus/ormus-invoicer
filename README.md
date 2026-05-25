@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Claude_Code-aa8142?style=flat-square&logo=anthropic&logoColor=white" alt="Claude Code" />
 </p>
 
+> **Superseded by [`invoice-forge`](https://github.com/HermeticOrmus/invoice-forge)** the maintained self-hosted invoicing repo. `invoice-forge` is a FastAPI + Playwright invoice editor (JSON-backed, zero-database); `ormus-invoicer` was a parallel Express + SQLite take and stays here for reference. New work happens in invoice-forge.
+
 ---
 
 > **Self-hosted invoicing for solo operators and small studios. Express + SQLite + PDF. No SaaS, no monthly fee, no telemetry, no lock-in.**
