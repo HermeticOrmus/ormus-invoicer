@@ -12,7 +12,8 @@
   <a href="https://github.com/HermeticOrmus/ormus-invoicer/stargazers"><img src="https://img.shields.io/github/stars/HermeticOrmus/ormus-invoicer?style=flat-square&color=aa8142" alt="Stars" /></a>
   <a href="https://github.com/HermeticOrmus/ormus-invoicer/blob/main/LICENSE"><img src="https://img.shields.io/github/license/HermeticOrmus/ormus-invoicer?style=flat-square&color=aa8142" alt="License" /></a>
   <a href="https://github.com/HermeticOrmus/ormus-invoicer/commits"><img src="https://img.shields.io/github/last-commit/HermeticOrmus/ormus-invoicer?style=flat-square&color=aa8142" alt="Last Commit" /></a>
-  <img src="https://img.shields.io/badge/Claude_Code-aa8142?style=flat-square&logo=anthropic&logoColor=white" alt="Claude Code" />
+  <img src="https://img.shields.io/badge/Node.js-aa8142?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/SQLite-aa8142?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
 </p>
 
 > **Superseded by [`invoice-forge`](https://github.com/HermeticOrmus/invoice-forge)** the maintained self-hosted invoicing repo. `invoice-forge` is a FastAPI + Playwright invoice editor (JSON-backed, zero-database); `ormus-invoicer` was a parallel Express + SQLite take and stays here for reference. New work happens in invoice-forge.
@@ -40,24 +41,34 @@ That's the entire scope of `ormus-invoicer`. ~900 lines of `server.js`, one HTML
 ```bash
 git clone https://github.com/HermeticOrmus/ormus-invoicer
 cd ormus-invoicer
+cp .env.example .env   # optional; defaults are fine for local use
 npm install
 npm start
 ```
 
-Open `http://localhost:8093`. The DB seeds itself on first run.
+Open `http://127.0.0.1:8093`. The DB seeds itself on first run.
 
 To configure your company name, logo, address, etc., edit settings via the UI (or directly in the SQLite `settings` table).
 
 ## Configuration
 
-Environment variables (all optional):
+Copy [`.env.example`](.env.example) to `.env` if you want overrides. Environment variables (all optional):
 
 | Var | Default | Purpose |
 |---|---|---|
 | `PORT` | `8093` | HTTP port |
+| `HOST` | `127.0.0.1` | Bind address (loopback by default) |
 | `DB_PATH` | `./data/invoicer.db` | SQLite file location |
 
 Anything more (company name, logo, terms, etc.) lives in the `settings` table and is set via the UI.
+
+## Security notes
+
+- **Local by default.** The server binds to `127.0.0.1` unless you set `HOST`. Do not expose this on a public interface without auth/TLS in front.
+- **No auth built in.** Treat the process like a local desktop app. If you put it behind a reverse proxy, add your own access control.
+- **Deal share tokens** are random; still treat share URLs as sensitive.
+- **Never commit** `.env`, `data/*.db`, or real client invoice data. `.gitignore` already excludes `.env` and SQLite files.
+- **Secrets scrub:** this repo ships with placeholder company settings only (`Your Company`). No API keys or credentials belong here.
 
 ## Schema
 

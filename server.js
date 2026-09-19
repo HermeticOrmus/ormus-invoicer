@@ -7,6 +7,8 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 8093;
+// Default to loopback so a casual `npm start` is not exposed on the LAN.
+const HOST = process.env.HOST || '127.0.0.1';
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'invoicer.db');
 
 // Ensure data directory exists
@@ -914,6 +916,6 @@ function formatCurrency(amount, currency) {
 }
 
 // --- Start ---
-app.listen(PORT, () => {
-  console.log(`ormus-invoicer running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`ormus-invoicer running on http://${HOST}:${PORT}`);
 });
